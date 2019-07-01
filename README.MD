@@ -13,6 +13,9 @@
       - [ Device data](#device-data)
     - [ Device configuration management](#device-configuration-management)
   - [ CI/CD workflow](#cicd-workflow)
+  - [ License](#license)
+  - [ Ask question or report issue](#ask-question-or-report-issue)
+  - [ Contribute](#contribute)
 
 <!-- /code_chunk_output -->
 
@@ -98,4 +101,27 @@ All configuration are managed in some roles and use JINJA2 templates with [more]
 
 ## CI/CD workflow
 
-__TODO__
+Continuous Integration process is based on [gitlab-ci] as it is a good option to house your own git server with a complete set of features.
+
+Workflow implements a multi-stages approach :
+
+- `checks`: Stage to validate ansible code quality
+- `staging`: Made pre-flight tests. In this demo, it is mainly to collect diff against production. But can also be to spinup a lab environment to validate
+- `deploy`: Apply configuration to network topology.
+- `post_deployment`: Run post-flight tests to ensure network is running as expecting.
+
+All this stages run at different time in the workflow. Below is result of a merge request into master:
+
+![Merge Request CI/CD](docs/cicd-multi-stage-workflow.png)
+
+## License
+
+Project is published under [BSD License](LICENSE).
+
+## Ask question or report issue
+
+Please open an issue on Github this is the fastest way to get an answer.
+
+## Contribute
+
+Contributing pull requests are gladly welcomed for this repository. If you are planning a big change, please start a discussion first to make sure we’ll be able to merge it.
