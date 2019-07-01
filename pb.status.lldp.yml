@@ -1,0 +1,23 @@
+---
+- name: Run commands on remote LAB devices
+  hosts: [spine,leaf]
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Collect LLDP Status
+      eos_command:
+        commands:
+          - enable
+          - show lldp neighbors
+        provider: "{{arista_credentials}}"
+      register: lldp_status
+
+    # - name: display all
+    #   debug:
+    #     msg: "{{lldp_status.stdout[1].lldpNeighbors}}"
+
+    - name: Display result
+      debug:
+        msg: "Found {{item.neighborDevice}} on port {{item.port}}"
+      with_items: "{{lldp_status.stdout[1].lldpNeighbors}}"

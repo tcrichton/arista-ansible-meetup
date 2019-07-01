@@ -1,0 +1,8 @@
+---
+# tasks file for base-config
+- name: Configure Baseline config with template
+  eos_config:
+    provider: "{{arista_credentials}}"
+    src: "baseline.j2"
+    save_when: "modified"
+    replace: 'config'

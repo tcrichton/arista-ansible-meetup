@@ -1,0 +1,17 @@
+---
+version: '2'
+services:
+   gitlab:
+       image: gitlab/gitlab-ce:latest
+       container_name: gitlab
+       restart: always
+       hostname: gitlab.lab.local
+       environment:
+        - GITLAB_ROOT_PASSWORD='arista123'
+       ports:
+         - '80:80'
+         - '8022:22'
+       volumes:
+         - ./config/:/etc/gitlab
+         - ./logs/:/var/log/gitlab
+         - ./data/:/var/opt/gitlab

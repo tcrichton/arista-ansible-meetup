@@ -1,0 +1,70 @@
+{# -------------------------------------- #}
+{# Manage BGP RENDERING                   #}
+{# -------------------------------------- #}
+{##}
+{% if routing.bgp_peers is defined %}
+router bgp {{routing.local_as | default('65000')}}
+   router-id {{routing.router_id | default('1.1.1.1')}}
+  {% if routing.ecmp is defined %}
+   maximum-paths {{routing.ecmp.max_path}} ecmp {{routing.ecmp.max_link}}
+  {% endif %}
+  {# Manage BGP peer & group configuration #}
+  {% for ip, peer in routing.bgp_peers.items() %}
+    {% if peer.type == 'group' %}
+   neighbor {{peer.key}} peer-group
+    {% endif %}
+    {% if peer.type == 'peer' and peer.group is defined %}
+   neighbor {{peer.key}} peer-group {{peer.group}}
+    {% endif %}
+    {% if peer.remote_as is defined %}
+   neighbor {{peer.key}} remote-as {{peer.remote_as}}
+    {% endif %}
+    {% if peer.multihop is defined %}
+   neighbor {{peer.key}} ebgp-multihop {{peer.multihop}}
+    {% endif %}
+    {% if peer.source is defined %}
+   neighbor {{peer.key}} update-source {{peer.source}}
+    {% endif %}
+   neighbor {{peer.key}} send-community extended
+  {% endfor %}
+  {# TODO: Implement a more granular way to support redistribution: protocol and route-map #}
+   redistribute connected
+   !
+   {# Address Family definition #}
+   address-family evpn
+  {% for ip, peer in routing.bgp_peers.items() if peer.families is defined and 'evpn' in peer.families %}
+      neighbor {{peer.key}} activate
+  {% endfor %}
+   !
+   address-family ipv4
+  {% for ip, peer in routing.bgp_peers.items() if peer.families is defined and 'ipv4' in peer.families %}
+      neighbor {{peer.key}} activate
+  {% endfor %}
+   !
+  {# VRF Configuration management -- Only support EVPN configuration #}
+  {# Do not support peer_list to export information #}
+  {% if routing.vrfs is defined %}
+  {% for vrf_name, vrf in routing.vrfs.items() if vrf.rd is defined and vrf.rt is defined %}
+   vrf {{vrf.key}}
+      rd {{vrf.rd}}
+      route-target import evpn {{vrf.rt}}
+      route-target export evpn {{vrf.rt}}
+    {% for protocol in vrf.redistribute if vrf.redistribute %}
+      redistribute {{protocol}}
+    {% endfor %}
+   !
+  {% endfor %}
+  {% endif %}
+  {# VLAN / VNI Configuration management -- Only support EVPN configuration #}
+  {% if vlans is defined %}
+  {% for vlan_id, vlan in vlans.items() if vlan.rd is defined and vlan.rt is defined %}
+   vlan {{vlan.key}}
+      rd {{vlan.rd}}
+      route-target both {{vlan.rt}}
+      redistribute learned
+   !
+  {% endfor %}
+  {% endif %}
+{% endif %}
+ip routing
+service routing protocols model multi-agent

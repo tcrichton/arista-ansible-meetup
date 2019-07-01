@@ -1,0 +1,6 @@
+---
+# tasks file for build-underlay
+- name: Configure Underlay with template
+  eos_config:
+    provider: "{{arista_credentials}}"
+    src: "underlay.j2"

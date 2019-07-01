@@ -1,0 +1,155 @@
+{
+    "hostname": "spine01",
+    "facts": {
+        "serial_number": "xxxxx",
+        "eos_version": "4.22.0F",
+        "configuration_version": "2",
+        "schema_version": "2019.1.0"
+    },
+    "interfaces": {
+        "physical": {
+            "ethernet 1": {
+                "key": "ethernet 1",
+                "ip_address": {
+                    "v4": {
+                        "address": "172.16.0.6",
+                        "netmask": 31
+                    }
+                },
+                "description": "to leaf01 -- et2",
+                "role": "ip_address",
+                "mtu": 9200,
+                "speed": "auto",
+                "state": "enable"
+            },
+            "ethernet 2": {
+                "key": "ethernet 2",
+                "ip_address": {
+                    "v4": {
+                        "address": "172.16.0.8",
+                        "netmask": 31
+                    }
+                },
+                "description": "to leaf02 -- et2",
+                "role": "ip_address",
+                "mtu": 9200,
+                "speed": "auto",
+                "state": "enable"
+            },
+            "ethernet 3": {
+                "key": "ethernet 3",
+                "ip_address": {
+                    "v4": {
+                        "address": "172.16.0.10",
+                        "netmask": 31
+                    }
+                },
+                "description": "to leaf03 -- et2",
+                "role": "ip_address",
+                "mtu": 9200,
+                "speed": "auto",
+                "state": "enable"
+            }
+        },
+        "loopbacks": {
+            "0": {
+                "key": 0,
+                "ip_address": {
+                    "v4": {
+                        "address": "10.254.0.2",
+                        "netmask": 32
+                    }
+                },
+                "description": "BGP Loopback",
+                "role": "ip_address"
+            }
+        }
+    },
+    "routing": {
+        "router_id": "10.255.0.2",
+        "local_as": 65000,
+        "bgp_peers": {
+            "172.16.0.7": {
+                "key": "172.16.0.7",
+                "remote_as": 65001,
+                "type": "peer",
+                "group": "LEAF"
+            },
+            "172.16.0.9": {
+                "key": "172.16.0.9",
+                "remote_as": 65002,
+                "type": "peer",
+                "group": "LEAF"
+            },
+            "172.16.0.11": {
+                "key": "172.16.0.11",
+                "remote_as": 65003,
+                "type": "peer",
+                "group": "LEAF"
+            },
+            "LEAF": {
+                "key": "LEAF",
+                "families": [
+                    "ipv4"
+                ],
+                "nh_unchanged": true,
+                "type": "group"
+            },
+            "10.254.0.13": {
+                "key": "10.254.0.13",
+                "type": "peer",
+                "group": "EVPN_FABRIC",
+                "remote_as": 65003
+            },
+            "10.254.0.12": {
+                "key": "10.254.0.12",
+                "type": "peer",
+                "group": "EVPN_FABRIC",
+                "remote_as": 65002
+            },
+            "10.254.0.11": {
+                "key": "10.254.0.11",
+                "type": "peer",
+                "group": "EVPN_FABRIC",
+                "remote_as": 65001
+            },
+            "EVPN_FABRIC": {
+                "key": "EVPN_FABRIC",
+                "families": [
+                    "evpn"
+                ],
+                "nh_unchanged": true,
+                "multihop": 5,
+                "type": "group",
+                "source": "Loopback0"
+            }
+        }
+    },
+    "management": {
+        "eapi_enable": true,
+        "admin_users": {
+            "user1": {
+                "username": "ansible",
+                "password": "ansible",
+                "privilege": 15,
+                "ssh_key": "public ssh key content"
+            }
+        },
+        "snmpv2_communities": {
+            "public": {
+                "community": "public",
+                "networks": [
+                    "10.10.0.0/24",
+                    "192.168.1.0/24"
+                ]
+            },
+            "private": {
+                "community": "private",
+                "networks": [
+                    "10.10.0.0/24",
+                    "192.168.1.0/24"
+                ]
+            }
+        }
+    }
+}

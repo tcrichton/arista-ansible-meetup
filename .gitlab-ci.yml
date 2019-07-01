@@ -1,0 +1,79 @@
+image: inetsix/runner-python:2.7
+
+stages:
+  - checks
+  - staging
+  - deploy
+  - post_deployment
+
+.ansible_bootstrap: &ansible_bootstrap
+  before_script:
+    - pip install -r requirements.txt
+    - chmod -R 700 .
+
+ansible:code_sanity:
+  <<: *ansible_bootstrap
+  stage: checks
+  script:
+    - ansible-playbook pb.configure.init.yml -i inventory.ini --syntax-check
+    - ansible-playbook pb.configure.fabric.intended.yml -i inventory.ini --syntax-check
+    - ansible-playbook pb.status.bgp.yml -i inventory.ini --syntax-check
+    - ansible-playbook pb.status.lldp.yml -i inventory.ini --syntax-check
+
+ansible:config_diff:
+  <<: *ansible_bootstrap
+  stage: staging
+  script:
+    - ansible-playbook pb.configure.fabric.intended.yml -i inventory.ini --check --diff
+  only:
+    refs:
+      - /^issue-[0-9]+.*$/
+      - master
+      - merge_requests
+    changes:
+      - roles/*
+      - host_vars/*
+      - group_vars/*
+
+ansible:build_fabric:
+  <<: *ansible_bootstrap
+  stage: deploy
+  script:
+    - ansible-playbook pb.configure.fabric.intended.yml -i inventory.ini 
+  only:
+    refs:
+      - master
+      - web
+    variables:
+      - $ROLLBACK == "no"
+
+ansible:rollback:
+  <<: *ansible_bootstrap
+  stage: deploy
+  script:
+    - ansible-playbook pb.configure.init.yml -i inventory.ini
+  only:
+    refs:
+      - web
+    variables:
+      - $ROLLBACK == "yes"
+
+ansible:check_bgp:
+  <<: *ansible_bootstrap
+  stage: post_deployment
+  script:
+    - ansible-playbook pb.status.bgp.yml -i inventory.ini 
+  only:
+    refs:
+      - master
+      - web
+
+ansible:check_lldp:
+  <<: *ansible_bootstrap
+  stage: post_deployment
+  script:
+    - ansible-playbook pb.status.lldp.yml -i inventory.ini 
+  only:
+    refs:
+      - master
+      - web

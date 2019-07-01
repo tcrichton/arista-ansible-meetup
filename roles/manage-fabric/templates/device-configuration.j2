@@ -1,0 +1,192 @@
+{# -------------------------------------- #}
+{# Manage Basic information rendering     #}
+{# -------------------------------------- #}
+{##}
+hostname {{hostname}}
+!
+username ansible privilege 15 secret sha512 $6$VIeqppufemK9nLGV$bwenyC/mURjyQdSyL/xEn5GEfGmk1Xl7/iv7vrnUA3Zw/2AMpwS/cdFyKjllVFaYBqEvP.8On1nDk4NSxnoEb0
+!
+interface Management1
+   description management interface
+   ip address {{ansible_host}}/24
+!
+management api http-commands
+   no shutdown
+!
+ip routing
+!
+service routing protocols model multi-agent
+!
+{# -------------------------------------- #}
+{# Manage Vlan and Vni RENDERING          #}
+{# -------------------------------------- #}
+{##}
+{% if vlans is defined %}
+{# Configuration of the vlans with their respective vnis in the vxlan configuration mode #}
+{% for vlan, vlan_details in vlans.items() %}
+vlan {{vlan_details.key}}
+!
+{% if vlan_details.vni is defined %}
+interface vxlan 1
+   vxlan vlan {{vlan_details.key}} vni {{vlan_details.vni}}
+!
+{% endif %}
+{% endfor %}
+!
+{% endif %}
+{# -------------------------------------- #}
+{# Manage VXLAN Interface configuration   #}
+{# -------------------------------------- #}
+{##}
+{% if interfaces.vxlan is defined and interfaces.vxlan['vxlan 1'] %}
+interface Vxlan1
+   vxlan source-interface {{interfaces.vxlan['vxlan 1'].source | default('Loopback1')}}
+   vxlan udp-port 4789
+{% endif %}
+{# -------------------------------------- #}
+{# Manage L3 INTERFACE RENDERING          #}
+{# -------------------------------------- #}
+{##}
+{% for interface_type in interfaces %}
+{# Dictionaries do not have iteritem methods in 3.x. You will need to change to .items() #}
+{# https://github.com/pallets/jinja/issues/150 #}
+{% for ifname, interface in interfaces[interface_type].items()|sort  %}
+{% if interface.role == "ip_address" %}
+{# use ifname for physocal and port-channel #}
+{% if interface_type == "physical" or interface_type == "port_channel"%}
+interface {{ifname| replace("_", "-")}}
+{% endif %}
+{# use interface_type + ifname for vlans and loopbacks #}
+{% if interface_type == "vlans" or interface_type == "loopbacks"%}
+interface {{interface_type| replace("s", "")}} {{ifname| replace("_", "-")}}
+{% endif %}
+  {% if interface.ip_address.vrf is defined %}
+  {# Only support new EOS syntax #}
+  {# MUST be placed on top of configuration to not unconfigured IP address #}
+  vrf {{interface.ip_address.vrf}}
+  {% endif %}
+  {% if interface.ip_address.v4 is defined %}
+  ip address {{interface.ip_address.v4.address}}/{{interface.ip_address.v4.netmask}}
+  {% endif %}
+  {% if interface.ip_address.v4_secondary is defined %}
+    {% for secondary in interface.ip_address.v4_secondary %}
+  ip address {{secondary.address}}/{{secondary.netmask}} secondary
+    {% endfor %}
+  {% endif %}
+  {% if interface.ip_address.v6 is defined %}
+  ipv6 enable
+  ipv6 address {{interface.ip_address.v6.address}}/{{interface.ip_address.v6.netmask}}
+  {% endif %}
+  {% if interface.ip_address.v6_secondary is defined %}
+    {% for secondary in interface.ip_address.v6_secondary %}
+  ipv6 address {{secondary.address}}/{{secondary.netmask}}
+    {% endfor %}
+  {% endif %}
+  {# Only if we configure a physical interface / does not make sense for vlans and loopback #}
+  {% if interface_type == "physical" or interface_type == "port_channel"%}
+  no switchport
+  {% endif %}
+  description {{interface.description | default("[no description provided]")}}
+  {% if interface.mtu is defined %}
+  mtu {{interface.mtu}}
+  {% endif %}
+  {% if interface.speed is defined %}
+  speed {{interface.speed}}
+  {% endif %}
+!
+{% endif %}
+{% endfor%}
+{% endfor%}
+{# -------------------------------------- #}
+{# Manage L2 INTERFACE RENDERING          #}
+{# -------------------------------------- #}
+{##}
+{% for interface_type in interfaces %}
+{# Dictionaries do not have iteritem methods in 3.x. You will need to change to .items() #}
+{# https://github.com/pallets/jinja/issues/150 #}
+{% for ifname, interface in interfaces[interface_type].items()|sort  %}
+{% if interface.role == "l2_access" %}
+{# use ifname for physical and port-channel #}
+{% if interface_type == "physical" or interface_type == "port_channel"%}
+interface {{ifname| replace("_", "-")}}
+{% endif %}
+   switchport access vlan {{interface.l2_access.vlan}}
+   description {{interface.description | default("[no description provided]")}}
+  {% if interface.mtu is defined %}
+  mtu {{interface.mtu}}
+  {% endif %}
+  {% if interface.speed is defined %}
+  speed {{interface.speed}}
+  {% endif %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{# -------------------------------------- #}
+{# Manage BGP RENDERING                   #}
+{# -------------------------------------- #}
+{##}
+{% if routing.bgp_peers is defined %}
+router bgp {{routing.local_as | default('65000')}}
+   router-id {{routing.router_id | default('1.1.1.1')}}
+  {% if routing.ecmp is defined %}
+   maximum-paths {{routing.ecmp.max_path}} ecmp {{routing.ecmp.max_link}}
+  {% endif %}
+  {# Manage BGP peer & group configuration #}
+  {% for ip, peer in routing.bgp_peers.items() %}
+    {% if peer.type == 'group' %}
+   neighbor {{peer.key}} peer-group
+    {% endif %}
+    {% if peer.type == 'peer' and peer.group is defined %}
+   neighbor {{peer.key}} peer-group {{peer.group}}
+    {% endif %}
+    {% if peer.remote_as is defined %}
+   neighbor {{peer.key}} remote-as {{peer.remote_as}}
+    {% endif %}
+    {% if peer.multihop is defined %}
+   neighbor {{peer.key}} ebgp-multihop {{peer.multihop}}
+    {% endif %}
+    {% if peer.source is defined %}
+   neighbor {{peer.key}} update-source {{peer.source}}
+    {% endif %}
+   neighbor {{peer.key}} send-community extended
+  {% endfor %}
+  {# TODO: Implement a more granular way to support redistribution: protocol and route-map #}
+   redistribute connected
+   !
+   {# Address Family definition #}
+   address-family evpn
+  {% for ip, peer in routing.bgp_peers.items() if peer.families is defined and 'evpn' in peer.families %}
+      neighbor {{peer.key}} activate
+  {% endfor %}
+   !
+   address-family ipv4
+  {% for ip, peer in routing.bgp_peers.items() if peer.families is defined and 'ipv4' in peer.families %}
+      neighbor {{peer.key}} activate
+  {% endfor %}
+   !
+  {# VRF Configuration management -- Only support EVPN configuration #}
+  {# Do not support peer_list to export information #}
+  {% if routing.vrfs is defined %}
+  {% for vrf_name, vrf in routing.vrfs.items() if vrf.rd is defined and vrf.rt is defined %}
+   vrf {{vrf.key}}
+      rd {{vrf.rd}}
+      route-target import evpn {{vrf.rt}}
+      route-target export evpn {{vrf.rt}}
+    {% for protocol in vrf.redistribute if vrf.redistribute %}
+      redistribute {{protocol}}
+    {% endfor %}
+   !
+  {% endfor %}
+  {% endif %}
+  {# VLAN / VNI Configuration management -- Only support EVPN configuration #}
+  {% if vlans is defined %}
+  {% for vlan_id, vlan in vlans.items() if vlan.rd is defined and vlan.rt is defined %}
+   vlan {{vlan.key}}
+      rd {{vlan.rd}}
+      route-target both {{vlan.rt}}
+      redistribute learned
+   !
+  {% endfor %}
+  {% endif %}
+{% endif %}
+!

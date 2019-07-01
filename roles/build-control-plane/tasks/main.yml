@@ -1,0 +1,7 @@
+---
+# tasks file for build-control-plane
+- name: Configure EBGP Control PLane with template
+  eos_config:
+    provider: "{{arista_credentials}}"
+    src: "control-plane.j2"
+    replace: "config"

@@ -1,0 +1,7 @@
+---
+# tasks file for manage-fabric
+- name: Intended configuration management
+  eos_config:
+    provider: "{{arista_credentials}}"
+    src: "device-configuration.j2"
+    replace: "config"
