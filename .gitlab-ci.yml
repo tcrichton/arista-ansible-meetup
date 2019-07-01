@@ -42,7 +42,6 @@ ansible:build_fabric:
     - ansible-playbook pb.configure.fabric.intended.yml -i inventory.ini 
   only:
     refs:
-      - merge_requests
       - master
       - web
     variables:
