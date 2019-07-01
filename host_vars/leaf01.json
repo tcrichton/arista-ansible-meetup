@@ -1,5 +1,5 @@
 {
-    "hostname": "leaf01-rack01",
+    "hostname": "leaf01",
     "facts": {
         "serial_number": "xxxxx",
         "eos_version": "4.22.0F",
