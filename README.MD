@@ -103,10 +103,10 @@ All configuration are managed in some roles and use JINJA2 templates with [more]
 
 Continuous Integration process is based on [gitlab-ci] as it is a good option to house your own git server with a complete set of features.
 
-Workflow implements a multi-stages approach :
+Workflow implements a [multi-stages](.gitlab-ci.yml) approach :
 
 - `checks`: Stage to validate ansible code quality
-- `staging`: Made pre-flight tests. In this demo, it is mainly to collect diff against production. But can also be to spinup a lab environment to validate
+- `staging`: Make pre-flight tests. In this demo, it is mainly to collect diff against production. But can also be used to spin-up a lab environment to validate
 - `deploy`: Apply configuration to network topology.
 - `post_deployment`: Run post-flight tests to ensure network is running as expecting.
 
