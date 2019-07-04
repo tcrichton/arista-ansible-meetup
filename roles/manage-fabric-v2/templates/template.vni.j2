@@ -1,0 +1,27 @@
+#jinja2:lstrip_blocks: True
+{# -------------------------------------- #}
+{# Manage VXLAN Interface configuration   #}
+{# -------------------------------------- #}
+{##}
+{% if interfaces.vxlan is defined and interfaces.vxlan['vxlan 1'] %}
+interface Vxlan1
+   vxlan source-interface {{interfaces.vxlan['vxlan 1'].source | default('Loopback1')}}
+   vxlan udp-port 4789
+{% endif %}
+{# -------------------------------------- #}
+{# Manage Vlan and Vni RENDERING          #}
+{# -------------------------------------- #}
+{##}
+{% if vlans is defined %}
+{# Configuration of the vlans with their respective vnis in the vxlan configuration mode #}
+{% for vlan, vlan_details in vlans.items() %}
+vlan {{vlan_details.key}}
+!
+{% if vlan_details.vni is defined %}
+interface vxlan 1
+   vxlan vlan {{vlan_details.key}} vni {{vlan_details.vni}}
+!
+{% endif %}
+{% endfor %}
+!
+{% endif %}

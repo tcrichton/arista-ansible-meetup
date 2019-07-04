@@ -1,0 +1,11 @@
+---
+- name: Configure Arista Fabric with Ansible
+  hosts: [spine,leaf]
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: deploy EOS configuration
+      eos_config:
+        provider: "{{arista_credentials}}"
+        src: "{{buildconfig}}"
+        replace: "config"

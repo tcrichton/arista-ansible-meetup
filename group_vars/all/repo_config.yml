@@ -1,0 +1,3 @@
+---
+buildpath: "{{inventory_dir}}/configs/{{inventory_hostname}}/"
+buildconfig: "{{inventory_dir}}/configs/{{inventory_hostname}}.conf"

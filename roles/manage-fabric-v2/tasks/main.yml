@@ -1,0 +1,37 @@
+---
+# # tasks file for manage-fabric
+# - name: Intended configuration management
+#   eos_config:
+#     provider: "{{arista_credentials}}"
+#     src: "device-configuration.j2"
+#     replace: "config"
+
+- name: Generate baseline configuration from template
+  template:
+    src: template.baseline.j2
+    dest: "{{ buildpath }}/baseline.conf"
+
+- name: Generate IP configuration from template
+  template:
+    src: template.interfaces.l3.j2
+    dest: "{{ buildpath }}/interfaces.l3.conf"
+
+- name: Generate BGP from template
+  template:
+    src: template.bgp.j2
+    dest: "{{ buildpath }}/bgp.conf"
+
+- name: Generate L2 interfaces from template
+  template:
+    src: template.interfaces.l2.j2
+    dest: "{{ buildpath }}/interfaces.l2.conf"
+
+- name: Generate VNIs from template
+  template:
+    src: template.vni.j2
+    dest: "{{ buildpath }}/vni.conf"
+
+- name: Assembling configurations and copying to conf/
+  assemble: 
+    src: "{{ buildpath }}" 
+    dest: "{{ buildconfig }}"

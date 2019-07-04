@@ -1,0 +1,19 @@
+{# -------------------------------------- #}
+{# Manage Basic information rendering     #}
+{# -------------------------------------- #}
+{##}
+hostname {{hostname}}
+!
+username ansible privilege 15 secret sha512 $6$VIeqppufemK9nLGV$bwenyC/mURjyQdSyL/xEn5GEfGmk1Xl7/iv7vrnUA3Zw/2AMpwS/cdFyKjllVFaYBqEvP.8On1nDk4NSxnoEb0
+!
+interface Management1
+   description management interface
+   ip address {{ansible_host}}/24
+!
+management api http-commands
+   no shutdown
+!
+ip routing
+!
+service routing protocols model multi-agent
+!

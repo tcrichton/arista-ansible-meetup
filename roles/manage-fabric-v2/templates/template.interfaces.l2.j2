@@ -1,0 +1,25 @@
+#jinja2:lstrip_blocks: True
+{# -------------------------------------- #}
+{# Manage L2 INTERFACE RENDERING          #}
+{# -------------------------------------- #}
+{##}
+{% for interface_type in interfaces %}
+{# Dictionaries do not have iteritem methods in 3.x. You will need to change to .items() #}
+{# https://github.com/pallets/jinja/issues/150 #}
+{% for ifname, interface in interfaces[interface_type].items()|sort  %}
+{% if interface.role == "l2_access" %}
+{# use ifname for physical and port-channel #}
+{% if interface_type == "physical" or interface_type == "port_channel"%}
+interface {{ifname| replace("_", "-")}}
+{% endif %}
+   switchport access vlan {{interface.l2_access.vlan}}
+   description {{interface.description | default("[no description provided]")}}
+  {% if interface.mtu is defined %}
+  mtu {{interface.mtu}}
+  {% endif %}
+  {% if interface.speed is defined %}
+  speed {{interface.speed}}
+  {% endif %}
+{% endif %}
+{% endfor %}
+{% endfor %}
