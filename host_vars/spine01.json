@@ -1,7 +1,7 @@
 {
-    "hostname": "spine01-global",
+    "hostname": "spine01-dc01",
     "facts": {
-        "serial_number": "xxxxx",
+        "serial_number": "xxxxxx",
         "eos_version": "4.22.0F",
         "configuration_version": "2",
         "schema_version": "2019.1.0"
