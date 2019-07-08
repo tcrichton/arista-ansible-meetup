@@ -2,6 +2,7 @@ image: inetsix/runner-python:2.7
 
 stages:
   - checks
+  - build
   - staging
   - deploy
   - post_deployment
@@ -17,35 +18,62 @@ ansible:code_sanity:
   script:
     - ansible-playbook pb.configure.init.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.configure.fabric.intended.yml -i inventory.ini --syntax-check
+    - ansible-playbook pb.configure.fabric.intended.v2.yml -i inventory.ini --syntax-check
+    - ansible-playbook pb.configure.deploy.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.status.bgp.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.status.lldp.yml -i inventory.ini --syntax-check
 
-ansible:config_diff:
+ansible:build_config:
   <<: *ansible_bootstrap
-  stage: staging
+  stage: build
   script:
-    - ansible-playbook pb.configure.fabric.intended.yml -i inventory.ini --check --diff
+    - ansible-playbook pb.configure.fabric.intended.v2.yml -i inventory.ini 
   only:
     refs:
       - /^issue-[0-9]+.*$/
       - master
       - merge_requests
+      - web
+  artifacts:
+    untracked: true
+    paths:
+      - configs/
+
+ansible:config_diff:
+  <<: *ansible_bootstrap
+  stage: staging
+  script:
+    - ansible-playbook pb.configure.deploy.yml -i inventory.ini --check --diff
+  only:
+    refs:
+      - /^issue-[0-9]+.*$/
+      - master
+      - merge_requests
+      - web
     changes:
       - roles/*
       - host_vars/*
       - group_vars/*
+  artifacts:
+    untracked: true
+    paths:
+      - configs/
 
-ansible:build_fabric:
+ansible:deploy_fabric:
   <<: *ansible_bootstrap
   stage: deploy
   script:
-    - ansible-playbook pb.configure.fabric.intended.yml -i inventory.ini 
+    - ansible-playbook pb.configure.deploy.yml -i inventory.ini 
   only:
     refs:
       - master
       - web
     variables:
       - $ROLLBACK == "no"
+  artifacts:
+    untracked: true
+    paths:
+      - configs/
 
 ansible:rollback:
   <<: *ansible_bootstrap
