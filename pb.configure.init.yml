@@ -3,5 +3,23 @@
   hosts: [spine,leaf]
   connection: local
   gather_facts: no
+  tasks:
+    - name: remove host build temp directory
+      file: 
+        path: "{{ buildpath }}" 
+        state: absent 
+        mode: 0755
+      delegate_to: localhost
+    - name: create host build temp directory
+      file: 
+        path: "{{ buildpath }}" 
+        state: directory
+        mode: 0755
+      delegate_to: localhost
+
+- name: Configure Arista Fabric with Ansible
+  hosts: [spine,leaf]
+  connection: local
+  gather_facts: no
   roles:
   - base-config

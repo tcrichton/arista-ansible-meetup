@@ -1,8 +1,18 @@
 ---
 # tasks file for base-config
-- name: Configure Baseline config with template
+- name: Generate VNIs from template
+  template:
+    src: baseline.j2
+    dest: "{{ buildpath }}/baseline.conf"
+
+- name: Assembling configurations and copying to conf/
+  assemble: 
+    src: "{{ buildpath }}" 
+    dest: "{{ buildconfig }}"
+
+- name: Push Baseline config
   eos_config:
     provider: "{{arista_credentials}}"
-    src: "baseline.j2"
+    src: "{{ buildpath }}/baseline.conf"
     save_when: "modified"
     replace: 'config'
