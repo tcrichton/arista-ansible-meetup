@@ -29,7 +29,6 @@ ansible:code_sanity:
   stage: checks
   script:
     - ansible-playbook pb.configure.init.yml -i inventory.ini --syntax-check
-    - ansible-playbook pb.configure.fabric.intended.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.configure.fabric.intended.v2.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.configure.deploy.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.status.bgp.yml -i inventory.ini --syntax-check
