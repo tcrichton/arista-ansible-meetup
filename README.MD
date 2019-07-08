@@ -13,6 +13,7 @@
       - [ Device data](#device-data)
     - [ Device configuration management](#device-configuration-management)
   - [ CI/CD workflow](#cicd-workflow)
+  - [ Resources](#resources)
   - [ License](#license)
   - [ Ask question or report issue](#ask-question-or-report-issue)
   - [ Contribute](#contribute)
@@ -35,9 +36,9 @@ To support demo, following network topology is used by Ansible
 
 ### Network description
 
-- Management network: 10.255.0.0/24
-- Underlay network block: 172.16.0.0/24 (with /31 point to point connection)
-- Customer Vlans: vid 100 / 10.100.0.0/24 - vid 200 / 10.200.0.0/24
+- Management network: `10.255.0.0/24`
+- Underlay network block: `172.16.0.0/24` (with `/31` point to point connection)
+- Customer Vlans: vid `100` / `10.100.0.0/24` - vid `200` / `10.200.0.0/24`
 
 ### Ansible content
 
@@ -47,7 +48,12 @@ Repository comes with a set of playbooks:
 
 - [`pb.configure.init.yml`](pb.configure.init.yml):  Playbook to load initial configuration on all EOS devices
 - [`pb.configure.fabric.yml`](pb.configure.fabric.yml): Configure fabric using __non-intended method__. Just use __add__ approach
-- [`pb.configure.fabric.intended.yml`](pb.configure.fabric.intended.yml): Configure fabric using __intended method__. New elements are added and non expected configurations are removed.
+- [`pb.configure.fabric.intended.v2.yml`](pb.configure.fabric.intended.v2.yml): Configure fabric using __intended method__. Configuration are built in __[configs/](configs/)__ folder by assembling multiple fragment files.
+- [`pb.configure.deploy.yml`](pb.configure.deploy.yml): Playbook to deploy intended configuration to devices. running configuration is replaced by generated configuration.
+- [`pb.status.bgp.yml`](pb.status.bgp.yml): Playbook to check if all BGP peers are UP.
+- [`pb.status.ldp.yml`](pb.status.ldp.yml): Playbook to collect LLDP neighbors.
+
+> As running in inteneded way, new elements are added and non expected configurations are removed.
 
 #### Device data
 
@@ -105,14 +111,25 @@ Continuous Integration process is based on [gitlab-ci] as it is a good option to
 
 Workflow implements a [multi-stages](.gitlab-ci.yml) approach :
 
-- `checks`: Stage to validate ansible code quality
-- `staging`: Make pre-flight tests. In this demo, it is mainly to collect diff against production. But can also be used to spin-up a lab environment to validate
-- `deploy`: Apply configuration to network topology.
-- `post_deployment`: Run post-flight tests to ensure network is running as expecting.
+- [`checks`](.gitlab-ci.yml#L29): Stage to validate ansible code quality
+- [`build`](.gitlab-ci.yml#L40): Create configuration files shared across all other stages
+- [`staging`](.gitlab-ci.yml#L56): Make pre-flight tests. In this demo, it is mainly to collect diff against production and [batfish](https://www.batfish.org/) validation. But can also be used to spin-up a lab environment to validate
+- [`deploy`](.gitlab-ci.yml#L95): Apply configuration to network topology.
+- [`post_deployment`](.gitlab-ci.yml#L122): Run post-flight tests to ensure network is running as expecting.
 
 All this stages run at different time in the workflow. Below is result of a merge request into master:
 
 ![Merge Request CI/CD](docs/cicd-multi-stage-workflow.png)
+
+## Resources
+
+- [An introduction to CI/CD best practices](https://www.digitalocean.com/community/tutorials/an-introduction-to-ci-cd-best-practices)
+- [Continuous Integration using Jenkins](https://sites.google.com/site/amitsciscozone/continuous-network-integration-using-jenkins)
+- [Experience with Network Automation at Dyn / NANOG 67](https://archive.nanog.org/sites/default/files/Vicente_Experiences.pdf)
+- [Ansible modules for EOS](https://docs.ansible.com/ansible/latest/modules/list_of_network_modules.html#eos)
+- [How-to documents](https://ansible-arista-howto.readthedocs.io/en/latest/?badge=latest) and [lab for Ansible with EOS](https://github.com/titom73/ansible-arista-module-howto)
+- [CI/CD use cases](https://networkop.co.uk/tags/network-ci/) by [Michael Kashin](https://github.com/networkop)
+
 
 ## License
 
