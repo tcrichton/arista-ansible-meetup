@@ -23,13 +23,3 @@
   gather_facts: no
   roles:
   - manage-fabric-v2
-
-- name: Deploy configuration
-  hosts: [spine,leaf]
-  connection: local
-  gather_facts: no
-  tasks:
-    - name: deploy EOS configuration
-      eos_config:
-        provider: "{{arista_credentials}}"
-        src: "{{buildconfig}}"

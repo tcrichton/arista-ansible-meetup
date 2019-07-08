@@ -29,8 +29,9 @@ ansible:code_sanity:
   stage: checks
   script:
     - ansible-playbook pb.configure.init.yml -i inventory.ini --syntax-check
-    - ansible-playbook pb.configure.fabric.intended.v2.yml -i inventory.ini --syntax-check
+    - ansible-playbook pb.configure.fabric.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.configure.deploy.yml -i inventory.ini --syntax-check
+    - ansible-playbook pb.configure.deploy.intended.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.status.bgp.yml -i inventory.ini --syntax-check
     - ansible-playbook pb.status.lldp.yml -i inventory.ini --syntax-check
 
@@ -38,7 +39,7 @@ ansible:build_config:
   <<: *ansible_bootstrap
   stage: build
   script:
-    - ansible-playbook pb.configure.fabric.intended.v2.yml -i inventory.ini 
+    - ansible-playbook pb.configure.fabric.yml -i inventory.ini 
   only:
     refs:
       - /^issue-[0-9]+.*$/
@@ -75,7 +76,7 @@ ansible:config_diff:
   <<: *ansible_bootstrap
   stage: staging
   script:
-    - ansible-playbook pb.configure.deploy.yml -i inventory.ini --check --diff
+    - ansible-playbook pb.configure.deploy.intended.yml -i inventory.ini --check --diff
   only:
     refs:
       - /^issue-[0-9]+.*$/
@@ -95,7 +96,7 @@ ansible:deploy_fabric:
   <<: *ansible_bootstrap
   stage: deploy
   script:
-    - ansible-playbook pb.configure.deploy.yml -i inventory.ini 
+    - ansible-playbook pb.configure.deploy.intended.yml -i inventory.ini 
   only:
     refs:
       - master
@@ -112,6 +113,7 @@ ansible:rollback:
   stage: deploy
   script:
     - ansible-playbook pb.configure.init.yml -i inventory.ini
+    - ansible-playbook pb.configure.deploy.intended.yml -i inventory.ini
   only:
     refs:
       - web
