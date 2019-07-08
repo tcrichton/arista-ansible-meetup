@@ -1,4 +1,10 @@
-image: inetsix/runner-python:2.7
+image: inetsix/runner-python:3
+
+# variables:
+#   GET_BATFISH_SERVER: docker inspect $(docker ps | grep batfish | awk '/ / { print $1 }') -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+#   BATFISH_SERVER: 'eval $GET_BATFISH_SERVER'
+#   DOCKER_HOST: tcp://docker:2375/
+#   DOCKER_DRIVER: overlay2
 
 stages:
   - checks
@@ -11,6 +17,12 @@ stages:
   before_script:
     - pip install -r requirements.txt
     - chmod -R 700 .
+
+.batfish_bootstrap: &bastfish_bootstrap
+  before_script:
+    - python -m pip install --upgrade git+https://github.com/batfish/pybatfish.git
+    - mkdir -p candidate/configs
+    - cp configs/*.conf candidate/configs/
 
 ansible:code_sanity:
   <<: *ansible_bootstrap
@@ -34,6 +46,27 @@ ansible:build_config:
       - master
       - merge_requests
       - web
+  artifacts:
+    untracked: true
+    paths:
+      - configs/
+
+batfish:config_analysis:
+  <<: *bastfish_bootstrap
+  stage: staging
+  script:
+    - python .ci/batfish-validation.py --batfish_server 172.17.0.3
+    - echo "Status code is" $?
+  only:
+    refs:
+      - /^issue-[0-9]+.*$/
+      - master
+      - merge_requests
+      - web
+    changes:
+      - roles/*
+      - host_vars/*
+      - group_vars/*
   artifacts:
     untracked: true
     paths:
