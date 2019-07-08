@@ -1,7 +1,0 @@
----
-- name: Configure Arista Fabric with Ansible
-  hosts: [spine,leaf]
-  connection: local
-  gather_facts: no
-  roles:
-  - manage-fabric

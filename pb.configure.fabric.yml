@@ -3,6 +3,33 @@
   hosts: [spine,leaf]
   connection: local
   gather_facts: no
+  tasks:
+    - name: remove host build temp directory
+      file: 
+        path: "{{ buildpath }}" 
+        state: absent 
+        mode: 0755
+      delegate_to: localhost
+    - name: create host build temp directory
+      file: 
+        path: "{{ buildpath }}" 
+        state: directory
+        mode: 0755
+      delegate_to: localhost
+
+- name: Configure Arista Fabric with Ansible
+  hosts: [spine,leaf]
+  connection: local
+  gather_facts: no
   roles:
-  - build-underlay
-  - build-control-plane
+  - manage-fabric-v2
+
+- name: Deploy configuration
+  hosts: [spine,leaf]
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: deploy EOS configuration
+      eos_config:
+        provider: "{{arista_credentials}}"
+        src: "{{buildconfig}}"
