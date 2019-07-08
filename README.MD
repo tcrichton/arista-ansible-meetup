@@ -47,9 +47,9 @@ To support demo, following network topology is used by Ansible
 Repository comes with a set of playbooks:
 
 - [`pb.configure.init.yml`](pb.configure.init.yml):  Playbook to load initial configuration on all EOS devices
-- [`pb.configure.fabric.yml`](pb.configure.fabric.yml): Configure fabric using __non-intended method__. Just use __add__ approach
-- [`pb.configure.fabric.intended.v2.yml`](pb.configure.fabric.intended.v2.yml): Configure fabric using __intended method__. Configuration are built in __[configs/](configs/)__ folder by assembling multiple fragment files.
-- [`pb.configure.deploy.yml`](pb.configure.deploy.yml): Playbook to deploy intended configuration to devices. running configuration is replaced by generated configuration.
+- [`pb.configure.fabric.yml`](pb.configure.fabric.yml): Create configuration files to deploy using either `pb.configure.deploy.yml` or `pb.configure.deploy.intended.yml`
+- [`pb.configure.deploy.intended.yml`](pb.configure.deploy.intended.yml): Playbook to deploy intended configuration to devices using __intended method__.
+- [`pb.configure.deploy.yml`](pb.configure.deploy.yml): Playbook to deploy intended configuration to devices. Use a add/remove approach.
 - [`pb.status.bgp.yml`](pb.status.bgp.yml): Playbook to check if all BGP peers are UP.
 - [`pb.status.ldp.yml`](pb.status.ldp.yml): Playbook to collect LLDP neighbors.
 
@@ -129,7 +129,7 @@ All this stages run at different time in the workflow. Below is result of a merg
 - [Ansible modules for EOS](https://docs.ansible.com/ansible/latest/modules/list_of_network_modules.html#eos)
 - [How-to documents](https://ansible-arista-howto.readthedocs.io/en/latest/?badge=latest) and [lab for Ansible with EOS](https://github.com/titom73/ansible-arista-module-howto)
 - [CI/CD use cases](https://networkop.co.uk/tags/network-ci/) by [Michael Kashin](https://github.com/networkop)
-
+- [How to use Ansible & Gitlab-CI to create IaC](https://about.gitlab.com/2019/07/01/using-ansible-and-gitlab-as-infrastructure-for-code/)
 
 ## License
 
